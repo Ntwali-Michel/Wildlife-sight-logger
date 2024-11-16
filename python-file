@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+
+import datetime
+
+# Function to enter sighting data
+def enter_sighting():
+    print("\nEnter Wildlife Sighting Details:")
+    animal_type = input("Type of animal: ")
+    number_spotted = input("Number of individuals spotted: ")
+    location = input("Location of sighting: ")
+    sighting_time = input("Time of sighting (HH:MM format): ")
+
+    sighting_data = {
+        "animal_type": animal_type,
+        "number_spotted": number_spotted,
+        "location": location,
+        "sighting_time": sighting_time,
+        "date": datetime.date.today()
+    }
+
+    return sighting_data
+
+# Function to display all entered sightings
+def review_sightings(sightings):
+    print("\nAll Wildlife Sightings:")
+    if sightings:
+        for idx, sighting in enumerate(sightings, 1):
+            print(f"\nSighting {idx}:")
+            print(f"Animal Type: {sighting['animal_type']}")
+            print(f"Number Spotted: {sighting['number_spotted']}")
+            print(f"Location: {sighting['location']}")
+            print(f"Sighting Time: {sighting['sighting_time']}")
+            print(f"Date: {sighting['date']}")
+    else:
+        print("No sightings recorded yet.")
+
+# Function to generate a report
+def generate_report(sightings):
+    if not sightings:
+        print("No sightings to generate a report.")
+        return
+
+    print("\nWildlife Sightings Report:")
+    animal_count = {}
+    for sighting in sightings:
+        animal_type = sighting['animal_type']
+        if animal_type in animal_count:
+            animal_count[animal_type] += 1
+        else:
+            animal_count[animal_type] = 1
+
+    for animal, count in animal_count.items():
+        print(f"Animal Type: {animal} - Sightings Count: {count}")
+
+# Main function
+def main():
+    sightings = []
+    while True:
+        print("\n--- Wildlife Sightings Logger ---")
+        print("1. Enter Wildlife Sighting")
+        print("2. Review Sightings")
+        print("3. Generate Report")
+        print("4. Exit")
+
+        choice = input("Enter your choice (1-4): ")
+
+        if choice == "1":
+            sighting = enter_sighting()
+            sightings.append(sighting)
+        elif choice == "2":
+            review_sightings(sightings)
+        elif choice == "3":
+            generate_report(sightings)
+        elif choice == "4":
+            print("Thank you for using the Wildlife Sightings Logger!")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main()
