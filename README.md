@@ -20,4 +20,4 @@ git clone https://github.com/username/wildlife-sightings-logger.git
 2. Navigate to the project directory:
 cd wildlife-sightings-logger
 3. Run the program
-python3 wildlife_logger.py
+python3 python-file.py
