@@ -1,60 +1,80 @@
-#!/usr/bin/python3
-
 import datetime
+import uuid
+from collections import defaultdict
 
 # Function to enter sighting data
 def enter_sighting():
-    print("\nEnter Wildlife Sighting Details:")
-    animal_type = input("Type of animal: ")
-    number_spotted = input("Number of individuals spotted: ")
-    location = input("Location of sighting: ")
-    sighting_time = input("Time of sighting (HH:MM format): ")
+    animal_type = input("Type of animal: ").strip()
+    
+    while True:
+        try:
+            number_spotted = int(input("Number of individuals spotted: ").strip())
+            if number_spotted < 1:
+                print("Please enter a positive number.")
+                continue
+            break
+        except ValueError:
+            print("Invalid input. Please enter a numeric value.")
+
+    location = input("Location of sighting: ").strip()
+
+    while True:
+        use_current_time = input("Would you like to use the current time? (yes/no): ").strip().lower()
+        if use_current_time == 'yes':
+            sighting_time = datetime.datetime.now().strftime("%H:%M")
+            print(f"Using current time: {sighting_time}")
+            break
+        elif use_current_time == 'no':
+            sighting_time = input("Enter time of sighting (HH:MM format): ").strip()
+            try:
+                datetime.datetime.strptime(sighting_time, "%H:%M")  # Validate time format
+                break
+            except ValueError:
+                print("Invalid time format. Please use HH:MM format.")
+        else:
+            print("Please answer with 'yes' or 'no'.")
 
     sighting_data = {
+        "id": str(uuid.uuid4()),
         "animal_type": animal_type,
         "number_spotted": number_spotted,
         "location": location,
         "sighting_time": sighting_time,
-        "date": datetime.date.today()
+        "date": str(datetime.date.today())
     }
 
     return sighting_data
 
 # Function to display all entered sightings
 def review_sightings(sightings):
-    print("\nAll Wildlife Sightings:")
     if sightings:
         for idx, sighting in enumerate(sightings, 1):
-            print(f"\nSighting {idx}:")
-            print(f"Animal Type: {sighting['animal_type']}")
-            print(f"Number Spotted: {sighting['number_spotted']}")
-            print(f"Location: {sighting['location']}")
-            print(f"Sighting Time: {sighting['sighting_time']}")
-            print(f"Date: {sighting['date']}")
+            print(f"\nSighting {idx}: {sighting['animal_type']} - {sighting['number_spotted']} spotted at {sighting['location']} on {sighting['date']} at {sighting['sighting_time']}")
     else:
         print("No sightings recorded yet.")
 
-# Function to generate a report
+# Function to generate a report of sightings
 def generate_report(sightings):
     if not sightings:
-        print("No sightings to generate a report.")
+        print("No sightings to report.")
         return
 
-    print("\nWildlife Sightings Report:")
-    animal_count = {}
-    for sighting in sightings:
-        animal_type = sighting['animal_type']
-        if animal_type in animal_count:
-            animal_count[animal_type] += 1
-        else:
-            animal_count[animal_type] = 1
+    total_sightings = len(sightings)
+    animal_count = defaultdict(int)
 
+    for sighting in sightings:
+        animal_count[sighting['animal_type']] += sighting['number_spotted']
+
+    print("\n--- Wildlife Sightings Report ---")
+    print(f"Total Sightings Recorded: {total_sightings}")
     for animal, count in animal_count.items():
-        print(f"Animal Type: {animal} - Sightings Count: {count}")
+        print(f"{animal}: {count} individuals spotted")
+    print("-------------------------------")
 
 # Main function
 def main():
     sightings = []
+
     while True:
         print("\n--- Wildlife Sightings Logger ---")
         print("1. Enter Wildlife Sighting")
