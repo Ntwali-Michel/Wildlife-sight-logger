@@ -1,101 +1,221 @@
 import datetime
-import uuid
-from collections import defaultdict
 
-# Function to enter sighting data
-def enter_sighting():
-    animal_type = input("Type of animal: ").strip()
-    
-    while True:
+
+# Class to represent a single wildlife sighting
+class WildlifeSighting:
+    def __init__(self, animal, number_of_animals, time_of_day, location, animal_condition, cubs_count, cubs_condition):
+        self.animal = animal
+        self.number_of_animals = number_of_animals
+        self.time_of_day = time_of_day
+        self.location = location
+        self.animal_condition = animal_condition
+        self.cubs_count = cubs_count
+        self.cubs_condition = cubs_condition
+        self.date_time = self.convert_to_datetime(time_of_day)
+        self.behavior = self.assess_behavior()
+        self.rangers_contacted = False
+
+    def convert_to_datetime(self, time_str):
+        # Convert time of day (e.g., "3pm", "11am") to a datetime object
         try:
-            number_spotted = int(input("Number of individuals spotted: ").strip())
-            if number_spotted < 1:
-                print("Please enter a positive number.")
-                continue
-            break
+            return datetime.datetime.strptime(time_str, "%I%p")
         except ValueError:
-            print("Invalid input. Please enter a numeric value.")
+            return datetime.datetime.strptime(time_str, "%I%M%p")
 
-    location = input("Location of sighting: ").strip()
+    def assess_behavior(self):
+        # Default behavior for each animal species
+        behavior = "No immediate concern."
 
-    while True:
-        use_current_time = input("Would you like to use the current time? (yes/no): ").strip().lower()
-        if use_current_time == 'yes':
-            sighting_time = datetime.datetime.now().strftime("%H:%M")
-            print(f"Using current time: {sighting_time}")
-            break
-        elif use_current_time == 'no':
-            sighting_time = input("Enter time of sighting (HH:MM format): ").strip()
-            try:
-                datetime.datetime.strptime(sighting_time, "%H:%M")  # Validate time format
+        # Animals typically in groups
+        grouped_animals = ['Zebra', 'Elephant', 'Lion', 'Giraffe', 'Kangaroo', 'Panda', 'Wolf', 'Crocodile']
+
+        # Animals that are solitary
+        solitary_animals = ['Tiger', 'Leopard', 'Koala', 'Gorilla', 'Monkey']
+
+        # Active and Non-Active times for animals
+        active_times = {
+            'Crocodile': ('6am', '7pm'),
+            'Gorilla': ('6am', '6pm'),
+            'Koala': ('6pm', '6am'),
+            'Tiger': ('7pm', '6am'),
+            'Leopard': ('7pm', '6am'),
+            'Zebra': ('6am', '6pm'),
+            'Elephant': ('6am', '6pm'),
+            'Lion': ('6am', '6pm'),
+            'Giraffe': ('6am', '6pm'),
+            'Cheetah': ('6am', '6pm'),
+            'Panda': ('6am', '6pm'),
+            'Wolf': ('6am', '6pm'),
+            'Kangaroo': ('6am', '6pm'),
+            'Monkey': ('6am', '6pm'),
+            'Bird': ('5am', '7pm')
+        }
+
+        # Habitat-based assessment (natural habitat, not-so-bad, and dangerous habitats)
+        animal_habitat = {
+            'Zebra': 'Savannah', 'Elephant': 'Savannah', 'Lion': 'Savannah', 'Giraffe': 'Savannah',
+            'Tiger': 'Forest', 'Leopard': 'Forest', 'Koala': 'Forest', 'Gorilla': 'Forest',
+            'Cheetah': 'Savannah', 'Panda': 'Forest', 'Wolf': 'Forest', 'Kangaroo': 'Savannah',
+            'Panda': 'Forest', 'Crocodile': 'River', 'Monkey': 'Forest'
+        }
+
+        # Habitat concern (place matters)
+        bad_habitats = {
+            'Koala': ['River', 'Savannah'],
+            'Gorilla': ['Savannah'],
+            'Zebra': ['Forest'],
+            'Tiger': ['Savannah'],
+        }
+
+        # Check if the sighting time is during the animal's active hours
+        active_start, active_end = active_times.get(self.animal, ('6am', '6pm'))
+        active_start_time = self.convert_to_datetime(active_start)
+        active_end_time = self.convert_to_datetime(active_end)
+
+        if self.date_time < active_start_time or self.date_time > active_end_time:
+            behavior = f"Unusual sighting: {self.animal}s are not typically active at this time."
+            self.rangers_contacted = True
+
+        # Specific behavior checks for animals
+        if self.animal == 'Zebra' and self.number_of_animals == 1 and self.location == 'River':
+            behavior = "Bad sign: Zebras are group animals and should not be alone near a river."
+            self.rangers_contacted = True
+
+        if self.animal == 'Leopard' and self.number_of_animals > 2:
+            behavior = "Bad sign: Leopards usually hunt alone, a group sighting could mean they are stressed or there is a scarcity of food."
+            self.rangers_contacted = True
+
+        if self.animal == 'Gorilla' and self.location == 'Savannah':
+            behavior = "Bad sign: Gorillas should not be in the savannah. This is a concerning sighting."
+            self.rangers_contacted = True
+
+        # Check behavior for grouped animals
+        if self.animal in grouped_animals and self.number_of_animals == 1:
+            behavior = f"Bad sign: {self.animal}s are group animals and should not be alone, especially in this location. Rangers have been contacted"
+            self.rangers_contacted = True
+
+        # Check behavior for solitary animals
+        if self.animal in solitary_animals and self.number_of_animals > 1:
+            behavior = f"Bad sign: {self.animal}s are solitary and should not be seen in groups. Rangers have been notified"
+            self.rangers_contacted = True
+
+        # If cubs are hurt, it is a concerning sign
+        if self.cubs_condition == 'hurt' and self.cubs_count > 0:
+            behavior = "Bad sign: Cubs are hurt, and this sighting is concerning. Rangers have been contacted"
+            self.rangers_contacted = True
+
+        # Habitat concern (e.g., koalas don't belong near a river, gorillas shouldn't be in the savannah)
+        if self.animal in bad_habitats and self.location in bad_habitats[self.animal]:
+            behavior = f"Not an immediate concern, but unusual: {self.animal}s typically do not wander around {self.location}. Keep an eye on the situation."
+
+        return behavior
+
+    def __repr__(self):
+        return f"{self.animal} - {self.number_of_animals} individuals at {self.location} at {self.time_of_day}. Condition: {self.animal_condition}. Cubs: {self.cubs_count} (Condition: {self.cubs_condition})"
+
+
+# Main Application Class
+class WildlifeSightingsLogger:
+    def __init__(self):
+        self.sightings = []
+        self.animal_species = [
+            'Zebra', 'Tiger', 'Bird', 'Lion', 'Elephant', 'Cheetah', 'Giraffe', 'Kangaroo', 'Panda', 'Leopard',
+            'Wolf', 'Koala', 'Gorilla', 'Crocodile', 'Monkey'
+        ]
+        self.locations = ['River', 'Lake', 'Forest', 'Savannah', 'Park Borders']
+
+    def log_sighting(self):
+        print("\nWelcome to the Wildlife Sightings Logger!")
+        print("Choose an animal from the list below:")
+
+        # Display animal species options
+        for idx, animal in enumerate(self.animal_species, 1):
+            print(f"{idx}. {animal}")
+
+        choice = int(input("\nEnter the number corresponding to the animal: "))
+
+        if choice < 1 or choice > len(self.animal_species):
+            print("Invalid choice. Please select a valid number.")
+            return
+
+        animal = self.animal_species[choice - 1]
+        number_of_animals = int(input(f"\nHow many {animal}s did you see? "))
+
+        time_of_day = input(f"Enter the time of day when you saw the {animal} (e.g., 3pm, 11am): ").strip()
+
+        # Ask about the location of the sighting
+        print("\nWhere did you see the animal?")
+        for idx, loc in enumerate(self.locations, 1):
+            print(f"{idx}. {loc}")
+        location_choice = int(input("Enter the number corresponding to the location: "))
+        location = self.locations[location_choice - 1]
+
+        # Ask about the animal's condition
+        animal_condition = input(f"How did the {animal} look? (Normal/Hurt): ").strip().lower()
+
+        # Ask about cubs
+        cubs_count = int(input(f"How many cubs did you see (if any)? "))
+        cubs_condition = "Normal" if cubs_count == 0 else input(
+            "How did the cubs look? (Normal/Hurt): ").strip().lower()
+
+        sighting = WildlifeSighting(animal, number_of_animals, time_of_day, location, animal_condition, cubs_count,
+                                    cubs_condition)
+        self.sightings.append(sighting)
+
+        print("\nSighting logged successfully!")
+
+    def review_sightings(self):
+        print("\nReview All Sightings:")
+        if not self.sightings:
+            print("No sightings logged yet.")
+        else:
+            for sighting in self.sightings:
+                print(sighting)
+
+    def generate_summary(self):
+        print("\nGenerate Summary of Sightings:")
+        if not self.sightings:
+            print("No sightings to summarize.")
+        else:
+            summary = {}
+            for sighting in self.sightings:
+                if sighting.animal not in summary:
+                    summary[sighting.animal] = {'count': 0, 'details': []}
+                summary[sighting.animal]['count'] += sighting.number_of_animals
+                summary[sighting.animal]['details'].append(sighting)
+
+            for animal, data in summary.items():
+                print(f"\n{animal}: Total sighted - {data['count']} individuals")
+                for sighting in data['details']:
+                    print(f"- {sighting} Behavior Assessment: {sighting.behavior}")
+                    # If a negative sighting is detected, suggest contacting rangers
+                    if sighting.rangers_contacted:
+                        print(f"Warning: The sighting has been flagged as concerning. Rangers have been contacted.")
+                print()
+
+    def run(self):
+        while True:
+            print("\nMain Menu:")
+            print("1. Log a New Sighting")
+            print("2. Review Sightings")
+            print("3. Generate Summary")
+            print("4. Exit")
+            choice = input("Choose an option: ")
+
+            if choice == '1':
+                self.log_sighting()
+            elif choice == '2':
+                self.review_sightings()
+            elif choice == '3':
+                self.generate_summary()
+            elif choice == '4':
+                print("Exiting application. Goodbye!")
                 break
-            except ValueError:
-                print("Invalid time format. Please use HH:MM format.")
-        else:
-            print("Please answer with 'yes' or 'no'.")
+            else:
+                print("Invalid choice. Please try again.")
 
-    sighting_data = {
-        "id": str(uuid.uuid4()),
-        "animal_type": animal_type,
-        "number_spotted": number_spotted,
-        "location": location,
-        "sighting_time": sighting_time,
-        "date": str(datetime.date.today())
-    }
 
-    return sighting_data
-
-# Function to display all entered sightings
-def review_sightings(sightings):
-    if sightings:
-        for idx, sighting in enumerate(sightings, 1):
-            print(f"\nSighting {idx}: {sighting['animal_type']} - {sighting['number_spotted']} spotted at {sighting['location']} on {sighting['date']} at {sighting['sighting_time']}")
-    else:
-        print("No sightings recorded yet.")
-
-# Function to generate a report of sightings
-def generate_report(sightings):
-    if not sightings:
-        print("No sightings to report.")
-        return
-
-    total_sightings = len(sightings)
-    animal_count = defaultdict(int)
-
-    for sighting in sightings:
-        animal_count[sighting['animal_type']] += sighting['number_spotted']
-
-    print("\n--- Wildlife Sightings Report ---")
-    print(f"Total Sightings Recorded: {total_sightings}")
-    for animal, count in animal_count.items():
-        print(f"{animal}: {count} individuals spotted")
-    print("-------------------------------")
-
-# Main function
-def main():
-    sightings = []
-
-    while True:
-        print("\n--- Wildlife Sightings Logger ---")
-        print("1. Enter Wildlife Sighting")
-        print("2. Review Sightings")
-        print("3. Generate Report")
-        print("4. Exit")
-
-        choice = input("Enter your choice (1-4): ")
-
-        if choice == "1":
-            sighting = enter_sighting()
-            sightings.append(sighting)
-        elif choice == "2":
-            review_sightings(sightings)
-        elif choice == "3":
-            generate_report(sightings)
-        elif choice == "4":
-            print("Thank you for using the Wildlife Sightings Logger!")
-            break
-        else:
-            print("Invalid choice. Please try again.")
-
+# Create an instance of the application and run it
 if __name__ == "__main__":
-    main()
+    app = WildlifeSightingsLogger()
+    app.run()
